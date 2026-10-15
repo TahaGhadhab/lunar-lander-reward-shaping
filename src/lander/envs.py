@@ -42,7 +42,7 @@ def make_vec_env(
     monitor_dir: str | Path | None = None,
     vec: str = "subproc",
 ) -> VecEnv:
-    """`n_envs` copies; env i is seeded `seed * 1000 + i` (no overlap with eval seeds 10_000+ if seed < 10)."""
+    """`n_envs` copies; env i gets seed `seed * 1000 + i` (disjoint from eval seeds 10_000+ if seed < 10)."""
     if monitor_dir is not None:
         Path(monitor_dir).mkdir(parents=True, exist_ok=True)
 

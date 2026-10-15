@@ -8,6 +8,7 @@ argument-hint: "<reward-name> [seeds=0,1,2] [steps=1000000]"
 
 Arguments: `$ARGUMENTS` (reward name, optional comma-separated seeds, optional steps).
 Defaults: seeds `0,1,2`, steps `1000000`. Every reward, baseline included, uses the same seeds and step budget.
+Training flags: `--vec dummy --torch-threads 1` (fastest on this CPU, see EXPERIMENTS.md); seeds may then run in parallel.
 
 ## Steps
 1. **Check the reward exists** in `src/lander/rewards.py`. If it does not, stop and ask me for its formula.
@@ -19,7 +20,7 @@ Defaults: seeds `0,1,2`, steps `1000000`. Every reward, baseline included, uses 
 4. **Tell me the estimated wall-clock time** for all seeds. If it is above 10 minutes, wait for my go.
 5. **Train** each seed:
    `.venv/Scripts/python -m lander.train --reward <name> --seed <s> --steps <n> --out runs/`
-   Run seeds one after another (each already uses 16 envs). Run long jobs in the background and check on them.
+   With `--torch-threads 1` each run uses one core: run the seeds in parallel, in the background.
 6. **Evaluate** each seed on the PLAIN env (custom wrapper off), 50 deterministic episodes, fixed eval seeds:
    `.venv/Scripts/python -m lander.evaluate runs/<name>/seed<s>`
 7. **Record** one clip for the most representative seed (the median by mean return, not the best):
