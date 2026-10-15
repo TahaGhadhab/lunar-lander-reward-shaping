@@ -76,7 +76,9 @@ python -m lander.watch --progression runs/progression/baseline/seed0   # one fli
 python -m lander.watch --model runs/upright_slow_bonus/seed2           # the hacked agent hovering
 python -m lander.watch --compare                                       # random, baseline, hack, fix in turn
 ```
-Keys: SPACE pause, N next, UP/DOWN speed, ESC quit. Progression runs are trained with
+Keys: SPACE pause, N next, UP/DOWN speed, ESC quit. Graphics: a textured moon and a rocket-shaped lander
+drawn by `lander/scene.py` from the physics state (purely cosmetic: a test checks that observations and
+rewards are identical with and without it). `--classic` shows Gymnasium's original flat drawing. Progression runs are trained with
 `--checkpoint-every 50000 --run-dir runs/progression/<reward>/seed<N>`.
 
 ![Watch window: the hacked agent](media/watch_hover.png)
@@ -113,8 +115,9 @@ Across machines expect the same ballpark; bit-identical numbers are not guarante
 ```
 src/lander/  envs.py (env + Monitor + reward wrapper), rewards.py (reward variants), train.py,
              evaluate.py (plain env, deterministic, 50 fixed seeds), record.py, plots.py,
-             watch.py (live viewer), dashboard.py + dashboard_template.html, introspect.py (network internals)
-tests/       wrapper pass-through, shaping math, potential telescoping, evaluation metrics, introspection (38 tests)
+             watch.py (live viewer), scene.py (textured renderer), dashboard.py + dashboard_template.html,
+             introspect.py (network internals)
+tests/       wrapper pass-through, shaping math, potential telescoping, evaluation metrics, introspection, renderer (39 tests)
 docs/        DESIGN.md (design + critical review), PLAN.md, EXPERIMENTS.md (dated log of every run)
 ```
 Stack: Python 3.12, Gymnasium 1.3 (Box2D), Stable-Baselines3 2.9 (PPO, `MlpPolicy` 2×64), PyTorch 2.14 on CPU.

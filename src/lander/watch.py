@@ -22,6 +22,7 @@ from stable_baselines3 import PPO
 from lander.envs import make_env
 from lander.evaluate import EVAL_SEED0, classify_outcome
 from lander.introspect import ACTION_NAMES, OBS_NAMES, list_checkpoints, policy_snapshot
+from lander.scene import SceneRenderer
 
 GAME_W, GAME_H, PANEL_W, WIN_H = 600, 400, 380, 440
 OUTCOME_COLORS = {"landed": (60, 200, 90), "crashed": (230, 70, 60), "out_of_bounds": (230, 140, 40),
@@ -153,8 +154,9 @@ class Viewer:
 
 
 def run(pilots: list[Pilot], episodes: int, seed0: int, speed: float, headless: bool = False,
-        max_frames: int = 0, screenshot: Path | None = None) -> None:
+        max_frames: int = 0, screenshot: Path | None = None, classic: bool = False) -> None:
     viewer = Viewer(headless)
+    scene = None if classic else SceneRenderer()
     env = make_env("baseline", render_mode="rgb_array")
     env.action_space.seed(seed0)
     state = {"quit": False, "paused": False, "skip": False, "speed": speed}
@@ -177,8 +179,10 @@ def run(pilots: list[Pilot], episodes: int, seed0: int, speed: float, headless: 
                 total_frames += 1
                 done = terminated or truncated
                 outcome = classify_outcome(env, terminated, truncated) if done else None
-                viewer.draw(env.render(), pilot, ep + 1, t, prev_obs, snap, action, ret, state["speed"],
-                            outcome)
+                frame = env.render()  # always called: keeps Gymnasium's particle bookkeeping unchanged
+                if scene:
+                    frame = scene.render(env, action, t)
+                viewer.draw(frame, pilot, ep + 1, t, prev_obs, snap, action, ret, state["speed"], outcome)
                 if screenshot and total_frames == max_frames:
                     viewer.pg.image.save(viewer.screen, str(screenshot))
                 if max_frames and total_frames >= max_frames:
@@ -186,8 +190,11 @@ def run(pilots: list[Pilot], episodes: int, seed0: int, speed: float, headless: 
                 viewer.clock.tick(int(50 * state["speed"]))
             if done and not state["quit"]:
                 print(f"{pilot.label:55s} ep {ep + 1}: {outcome:13s} return {ret:7.1f}  {t} frames")
-                for _ in range(40 if not headless else 0):  # hold the result on screen ~0.8 s
+                for k in range(40 if not headless else 0):  # hold the result ~0.8 s; crashes explode
                     viewer.events(state)
+                    if scene and outcome == "crashed":
+                        viewer.draw(scene.render(env, 0, t + k, crash_frame=k), pilot, ep + 1, t, prev_obs,
+                                    snap, action, ret, state["speed"], outcome)
                     viewer.clock.tick(50)
             if state["quit"]:
                 break
@@ -211,9 +218,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--headless", action="store_true", help="no window (tests)")
     p.add_argument("--max-frames", type=int, default=0)
     p.add_argument("--screenshot", type=Path, default=None, help="save the window at --max-frames")
+    p.add_argument("--classic", action="store_true", help="Gymnasium's original flat graphics")
     args = p.parse_args(argv)
     run(pilots_from_args(args), args.episodes, args.seed, args.speed, args.headless, args.max_frames,
-        args.screenshot)
+        args.screenshot, args.classic)
 
 
 if __name__ == "__main__":

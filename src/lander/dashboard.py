@@ -30,6 +30,7 @@ from lander.envs import make_env
 from lander.evaluate import EVAL_SEED0, classify_outcome, run_episode, summarize
 from lander.introspect import ACTION_NAMES, OBS_NAMES, list_checkpoints, policy_snapshot
 from lander.plots import DEFAULT_REWARDS, load_monitor, to_grid
+from lander.scene import SceneRenderer
 from lander.train import PPO_HYPERPARAMS
 
 TEMPLATE = Path(__file__).with_name("dashboard_template.html")
@@ -155,6 +156,7 @@ def frame_to_b64(frame: np.ndarray, width: int = 300, quality: int = 60) -> str:
 
 def record_replay(model_path: Path, stride: int, seed: int = EVAL_SEED0) -> dict:
     model = PPO.load(model_path, device="cpu")
+    scene = SceneRenderer()
     env = make_env("baseline", render_mode="rgb_array")
     obs, _ = env.reset(seed=seed)
     frames, steps = [], []
@@ -163,7 +165,8 @@ def record_replay(model_path: Path, stride: int, seed: int = EVAL_SEED0) -> dict
         snap = policy_snapshot(model, obs)
         action = int(np.argmax(snap["probs"]))
         if t % stride == 0:
-            frames.append(frame_to_b64(env.render()))
+            env.render()  # keeps Gymnasium's particle bookkeeping unchanged
+            frames.append(frame_to_b64(scene.render(env, action, t)))
             steps.append({"t": t, "obs": r(obs), "h1": r(snap["h1"], 2), "h2": r(snap["h2"], 2),
                           "p": r(snap["probs"]), "v": round(snap["value"], 1), "a": action,
                           "ret": round(ret, 1)})
