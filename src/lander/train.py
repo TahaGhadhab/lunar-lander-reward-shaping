@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList, CheckpointCallback
 from stable_baselines3.common.logger import configure
 
 from lander.envs import ENV_ID, make_env, make_vec_env
@@ -85,6 +85,7 @@ def build_config(args: argparse.Namespace) -> dict:
         "n_envs": args.n_envs,
         "vec_env": args.vec,
         "torch_threads": args.torch_threads,
+        "checkpoint_every": args.checkpoint_every,
         "device": "cpu",
         "policy": "MlpPolicy",
         "ppo": PPO_HYPERPARAMS,
@@ -109,8 +110,13 @@ def train(args: argparse.Namespace) -> Path:
     model = PPO("MlpPolicy", env, seed=args.seed, device="cpu", verbose=1, **PPO_HYPERPARAMS)
     model.set_logger(configure(str(run_dir), ["stdout", "csv"]))
 
+    callbacks = [ShapedReturnCallback()]
+    if args.checkpoint_every:
+        # save_freq counts vec-env calls (n_envs steps each), not timesteps.
+        callbacks.append(CheckpointCallback(max(args.checkpoint_every // args.n_envs, 1),
+                                            str(run_dir / "checkpoints"), name_prefix="model"))
     start = time.perf_counter()
-    model.learn(total_timesteps=args.steps, callback=ShapedReturnCallback())
+    model.learn(total_timesteps=args.steps, callback=CallbackList(callbacks))
     elapsed = time.perf_counter() - start
     model.save(run_dir / "model.zip")
     env.close()
@@ -137,6 +143,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--out", default="runs")
     p.add_argument("--run-dir", default=None, help="override output dir (e.g. for dry runs)")
     p.add_argument("--force", action="store_true")
+    p.add_argument("--checkpoint-every", type=int, default=0,
+                   help="save checkpoints/model_<steps>_steps.zip every N timesteps (0 = off)")
     return p.parse_args(argv)
 
 
