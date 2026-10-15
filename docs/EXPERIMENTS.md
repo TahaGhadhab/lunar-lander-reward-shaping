@@ -144,6 +144,19 @@ Write the hypothesis **before** looking at the results.
   depends on the learning path, not only on what is optimal.
 - **Next:** Phase 6, the potential-based fix and its ablation.
 
+### 2026-10-15 | finding: training-time truncation is not a hack signature (stochastic policy)
+- **Observation:** the learning curves (`plots.py`) show the *baseline* at about 930 frames per episode at the end of
+  training (SB3 log agrees: `ep_len_mean` 927, `ep_rew_mean` 150; monitor: 89% of the last 100 episodes hit 1000),
+  while its deterministic evaluation lands in 366 frames with 2% truncation.
+- **Check:** baseline seed 0, stochastic policy, 20 eval episodes: 80% truncated, legs down on 82% of the last 100
+  frames, side engines on 38% of frames after first contact. The sampled policy lands, then its random side-engine
+  firings keep the body awake (same `wake=True` mechanism as the Phase 5 audit), so it never earns the +100.
+  That is the whole gap between training (150) and evaluation (257).
+- **Consequences:** (1) truncation and length *during training* cannot diagnose reward hacking here; only the
+  deterministic plain-env evaluation can, which is why the protocol is built that way. (2) The `time_penalty` curve
+  drops from about 900 to 280 frames after 800k steps: the fee teaches the agent to stop fidgeting once down, which
+  also explains its slightly higher evaluation return.
+
 ### 2026-10-15 | upright_slow_potential (ablation) and upright_slow_fixed | seeds 0, 1, 2 each
 - **Hypothesis:** both remove the exploit: truncation below 5% on every seed, plain mean within one baseline std
   (about 257 +/- 25). Reason: with `F = gamma*Phi(s') - Phi(s)` a stall in the best state pays
@@ -155,3 +168,27 @@ Write the hypothesis **before** looking at the results.
   scales), `gamma = 0.999` (= PPO), `Phi = 0` on termination only. `fixed` = same + `-0.05` per frame.
 - **Command:** `python -m lander.train --reward <name> --seed <s> --steps 1000000 --vec dummy --torch-threads 1`
 - **Hyperparams changed vs default:** none
+- **Wall clock:** 7.7 min per run, 6 runs in parallel (one per physical core).
+- **Results (plain env, 50 deterministic episodes per seed):**
+
+  | Reward | Seed | Mean +/- std | Success % | Mean length | Truncation % | Landed % |
+  |--------|------|--------------|-----------|-------------|--------------|----------|
+  | potential | 0 | 256.0 +/- 18.4 | 100 | 343 | 0 | 100 |
+  | potential | 1 | 268.6 +/- 20.3 | 100 | 302 | 0 | 100 |
+  | potential | 2 | 255.2 +/- 18.9 | 100 | 362 | 0 | 100 |
+  | **potential** | **all** | **259.9** (worst 255.2) | **100** | **336** | **0** | **100** |
+  | fixed | 0 | 249.0 +/- 19.4 | 100 | 413 | 0 | 100 |
+  | fixed | 1 | 271.3 +/- 19.0 | 100 | 276 | 0 | 100 |
+  | fixed | 2 | 270.0 +/- 18.5 | 100 | 297 | 0 | 100 |
+  | **fixed** | **all** | **263.4** (worst 249.0) | **100** | **329** | **0** | **100** |
+
+- **Clips:** `media/potential_landing.mp4` (median seed 0: 246.4, 312 frames, landed),
+  `media/fixed_landing.mp4` (median seed 2: 258.6, 285 frames, landed).
+- **Verdict:** confirmed for both, on every seed: truncation 0% (bonus version: 77%), plain mean within one
+  baseline std of the baseline (257.3 +/- about 25). **The ablation answers the key question: the potential term
+  alone removes the exploit**; the fee is not needed. As predicted, the fix gives baseline-level results, not better
+  ones; the small differences between baseline, potential and fixed (257 / 260 / 263) are inside seed noise.
+  Partly refuted: `fixed` did not shorten episodes as much as `time_penalty` did (329 vs 301; seed 0 at 413).
+- **Side observation, not a conclusion:** in the training curves (stochastic policy) both potential variants end
+  higher than baseline (about 235 and 190 vs 160). Possibly the potential term discourages post-landing fidgeting
+  (moving away from the rest state lowers Phi), but this was not tested.

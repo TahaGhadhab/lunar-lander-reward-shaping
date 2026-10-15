@@ -57,7 +57,7 @@ I `record.py` is tried on the dry-run model.
   mean length near 1000, success near 0 on the plain env, plus `media/hack.mp4` named by what it shows.
   If no seed exploits it, try a looser threshold or 2M steps before concluding.
 
-### [ ] Phase 6: Fix it
+### [x] Phase 6: Fix it
 - Reward `upright_slow_potential`: `F = gamma*Phi(s') - Phi(s)` on the same "upright and slow" score, no fee (amendment G).
 - Reward `upright_slow_fixed`: the same plus a per-frame fee.
 - Run the `reward-auditor` agent on `rewards.py` first and address its findings. 3 seeds each.
@@ -75,5 +75,5 @@ I `record.py` is tried on the dry-run model.
 | baseline | 0,1,2 | 257.3 [252.6] | 98 | 366 | 2 | media/baseline_landing.mp4 |
 | time_penalty | 0,1,2 | 266.7 [265.8] | 100 | 301 | 0 | media/time_penalty_landing.mp4 |
 | upright_slow_bonus | 0,1,2 | 36.8 [-49.3] | 19 | 889 | 77 | media/hover_hack.mp4 |
-| upright_slow_potential | | | | | | |
-| upright_slow_fixed | | | | | | |
+| upright_slow_potential | 0,1,2 | 259.9 [255.2] | 100 | 336 | 0 | media/potential_landing.mp4 |
+| upright_slow_fixed | 0,1,2 | 263.4 [249.0] | 100 | 329 | 0 | media/fixed_landing.mp4 |
