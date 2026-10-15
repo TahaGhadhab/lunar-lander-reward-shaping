@@ -99,3 +99,17 @@ Write the hypothesis **before** looking at the results.
   lost +100, so **mean return alone can hide the hack**; truncation and success rate catch it.
 - Thresholds 0.2 / 0.2: 90 to 100% of baseline touchdowns are inside them; 31 to 49% of baseline frames are paid.
 - Fixed: gamma was defined in two places (rewards and train); a test now asserts they match.
+
+### 2026-10-15 | upright_slow_bonus | seeds 0, 1, 2
+- **Hypothesis:** reward hacking through truncation on most or all seeds. Predicted form: **sit-and-twitch**
+  (land, then fire a side engine at least every 24 frames so the body never sleeps), not hovering: sitting
+  costs at most 0.03 per frame against about 0.3 per main-engine frame for hovering, and both earn +1.
+  Predicted plain-env signature: truncation rate near 100%, mean length near 1000, success near 0%,
+  landed near 0%, but plain mean return only moderately below baseline (roughly 100 to 175, since only the
+  +100 landing bonus is lost). If instead the agent hovers, the plain return should be far lower (fuel).
+  Arithmetic (DESIGN 9.1): sitting nets about +1 per frame, so a stall state is worth about 1/(1-0.999) = 1000
+  under truncation bootstrapping, against about 100 for landing.
+- **Reward change:** built-in + `+1` per frame when `|tilt| < 0.2 rad` and `hypot(vx, vy) < 0.2` (obs units).
+  Thresholds checked on baseline: 90-100% of its touchdowns are inside them.
+- **Command:** `python -m lander.train --reward upright_slow_bonus --seed <s> --steps 1000000 --vec dummy --torch-threads 1`
+- **Hyperparams changed vs default:** none
