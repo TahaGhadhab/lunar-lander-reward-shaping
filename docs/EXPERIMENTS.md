@@ -113,3 +113,33 @@ Write the hypothesis **before** looking at the results.
   Thresholds checked on baseline: 90-100% of its touchdowns are inside them.
 - **Command:** `python -m lander.train --reward upright_slow_bonus --seed <s> --steps 1000000 --vec dummy --torch-threads 1`
 - **Hyperparams changed vs default:** none
+- **Results (plain env, 50 deterministic episodes per seed):**
+
+  | Seed | Mean +/- std | Success % | Mean length | Truncation % | Landed % |
+  |------|--------------|-----------|-------------|--------------|----------|
+  | 0 | 186.8 +/- 54.8 | 58 | 668 | 30 | 70 |
+  | 1 | -49.3 +/- 32.2 | 0 | 1000 | 100 | 0 |
+  | 2 | -27.0 +/- 19.2 | 0 | 1000 | 100 | 0 |
+  | **all** | **36.8** (worst -49.3) | **19** | **889** | **77** | **23** |
+
+- **Training curves told the opposite story:** final shaped `ep_rew_mean` 910 / 1,020 / 920 while the plain
+  return was 146 / 66 / 99. Judged by its own reward, every seed "succeeded".
+- **Behaviour (10 eval episodes per seed, deterministic):**
+
+  | Seed | Legs in contact | Main engine | Side engines | Bonus paid | Median height |
+  |------|-----------------|-------------|--------------|------------|---------------|
+  | 0 | 35% of frames | 32% | 68% | 73% | 0.06 |
+  | 1 | 0% | 57% | 43% | 96% | 1.10 |
+  | 2 | 0% | 57% | 41% | 95% | 0.61 |
+
+- **Clip:** `media/hover_hack.mp4` (median seed 2, eval seed 10,000: return -31.6, 1000 frames, timeout).
+- **What I saw in the clip (key frames):** the lander descends to just above the pad, then hangs there upright,
+  firing the main engine in pulses, never touching down, until the 1000-frame cut.
+- **Verdict:** reward hacking **confirmed** (2/3 seeds fully, 1/3 partly). My prediction about its *form* is
+  **refuted** for seeds 1 and 2: they hover, they do not sit and twitch, even though sitting is cheaper
+  (+1 - 0.03 vs about +1 - 0.17 per frame here). Likely reason: hovering is reachable earlier in training, before
+  the agent can land, and it already pays about 10x what landing pays, so PPO's small steps never cross the
+  "land first" valley to find the cheaper exploit. Seed 0 is a mix: it sometimes lands, sometimes sits on the
+  ground firing side engines (35% leg contact, 68% side engine). Lesson for the write-up: the exploit an agent finds
+  depends on the learning path, not only on what is optimal.
+- **Next:** Phase 6, the potential-based fix and its ablation.

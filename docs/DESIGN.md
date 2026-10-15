@@ -278,6 +278,8 @@ Consequences:
 - If you specifically want a hovering clip, a variant paying the bonus only when both legs are off the ground
   (`obs[6] == obs[7] == 0`) forces it. Optional; decide after seeing Phase 5.
 - This is a prediction, not a fact. Phase 5's hypothesis entry in `EXPERIMENTS.md` should state it so it can be refuted.
+- **Outcome (2026-10-15): refuted for 2 of 3 seeds.** The mechanism is real (side impulses use `wake=True`), but
+  seeds 1 and 2 learned to hover; only seed 0 partly sits and twitches. See `EXPERIMENTS.md`.
 
 ### 9.3 Partial observability of time
 The observation has no time feature, so the agent cannot know the episode will be cut. That is fine and even

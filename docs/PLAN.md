@@ -49,7 +49,7 @@ I `record.py` is tried on the dry-run model.
 
 ## Tomorrow (about 4 to 6 h): phases 5 to 7
 
-### [ ] Phase 5: Break it on purpose
+### [x] Phase 5: Break it on purpose
 - Reward `upright_slow_bonus`: +1 per frame when |tilt| and speed are under thresholds (write the thresholds in the log).
 - Hypothesis to write first: the cheapest exploit is probably to sit on the ground and twitch the side engines
   (0.03 per frame) rather than hover (about 0.3 per main-engine frame). Retrain with 3 seeds and watch the clips.
@@ -74,6 +74,6 @@ I `record.py` is tried on the dry-run model.
 |--------|-------|-------------------------|-----------|-----------------|--------------|------|
 | baseline | 0,1,2 | 257.3 [252.6] | 98 | 366 | 2 | media/baseline_landing.mp4 |
 | time_penalty | 0,1,2 | 266.7 [265.8] | 100 | 301 | 0 | media/time_penalty_landing.mp4 |
-| upright_slow_bonus | | | | | | |
+| upright_slow_bonus | 0,1,2 | 36.8 [-49.3] | 19 | 889 | 77 | media/hover_hack.mp4 |
 | upright_slow_potential | | | | | | |
 | upright_slow_fixed | | | | | | |
