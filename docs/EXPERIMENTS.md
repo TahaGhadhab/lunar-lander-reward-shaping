@@ -65,3 +65,13 @@ Write the hypothesis **before** looking at the results.
   Upgraded the base interpreter to 3.12.10 (`winget upgrade Python.Python.3.12`); loading works. Models trained
   under 3.12.0 load fine under 3.12.10.
 - **Next:** time_penalty, 3 seeds.
+
+### 2026-10-15 | time_penalty | seeds 0, 1, 2
+- **Hypothesis:** the agent still lands (plain-env mean within one std of baseline, about 225 to 260) and lands
+  faster: mean length below baseline's 366 frames. Small risk of more hard landings if it rushes.
+- **Reward change:** built-in reward + `-0.05` per frame.
+  Why 0.05: over a baseline-length episode (~366 frames) it costs about 18, small next to the +100 landing bonus;
+  over the 1,000-frame limit it costs at most 50, so it can never make a -100 crash look attractive. It is about
+  1/6 of the main-engine cost per frame (0.3), enough to discourage dawdling, not enough to dominate.
+- **Command:** `python -m lander.train --reward time_penalty --seed <s> --steps 1000000 --vec dummy --torch-threads 1`
+- **Hyperparams changed vs default:** none
