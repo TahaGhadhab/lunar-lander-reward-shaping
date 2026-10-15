@@ -192,3 +192,8 @@ Write the hypothesis **before** looking at the results.
 - **Side observation, not a conclusion:** in the training curves (stochastic policy) both potential variants end
   higher than baseline (about 235 and 190 vs 160). Possibly the potential term discourages post-landing fidgeting
   (moving away from the rest state lowers Phi), but this was not tested.
+
+### 2026-10-15 | reproduction check (Phase 7 done-criterion)
+- Fresh `git clone` into a temporary folder, new venv, `pip install -r requirements.txt && pip install -e .`, then
+  exactly the README commands: 35 tests pass; `upright_slow_bonus` seed 1, 1M steps (4.7 min alone) evaluates to
+  **-49.3 +/- 32.2, truncation 100%, success 0%**: identical to the original run on the same machine.

@@ -64,7 +64,7 @@ I `record.py` is tried on the dry-run model.
 - **Done when** (amendment H), for both: truncation rate below 5% on every seed, plain-env mean within one baseline
   std of the baseline mean, and `media/fixed_landing.mp4` exists.
 
-### [ ] Phase 7: Write-up
+### [x] Phase 7: Write-up
 - `plots.py`: learning curves (mean and std over seeds) per reward, plain return and episode length, saved to `media/*.png`.
 - README: problem, method, results table, clips, what I learned.
 - **Done when:** a stranger can reproduce one result from the README alone.

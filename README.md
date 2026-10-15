@@ -75,7 +75,8 @@ python -m lander.train --reward upright_slow_bonus --seed 1 --vec dummy --torch-
 python -m lander.evaluate runs/upright_slow_bonus/seed1    # expect: trunc=100%, success=0%
 python -m lander.record runs/upright_slow_bonus/seed1 --out media/my_hover.mp4
 ```
-Seeded runs reproduce the same ballpark. Bit-identical numbers across machines are not guaranteed.
+On the original machine a fresh clone reproduced this run exactly (-49.3 +/- 32.2, 100% truncation).
+Across machines expect the same ballpark; bit-identical numbers are not guaranteed.
 
 ## Project layout
 ```
