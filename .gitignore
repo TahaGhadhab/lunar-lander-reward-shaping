@@ -1,0 +1,18 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# training outputs
+runs/
+tb/
+videos/
+*.zip
+
+# keep curated media small
+media/*.gif
+
+.env
+.claude/settings.local.json
