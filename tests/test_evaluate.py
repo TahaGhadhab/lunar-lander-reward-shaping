@@ -8,6 +8,7 @@ def ep(ret, length=300, terminated=True, truncated=False, outcome="landed"):
 
 
 def test_summarize_rates():
+    """Evaluation metrics (mean, success, truncation, landed, crashed) are computed correctly."""
     results = [
         ep(250.0),
         ep(210.0),
@@ -26,9 +27,11 @@ def test_summarize_rates():
 
 
 def test_success_threshold_is_inclusive():
+    """A score of exactly 200 counts as a success, as in Gymnasium."""
     assert summarize([ep(200.0)])["success_rate"] == 1.0
 
 
 def test_flags_detect_stalling():
+    """Many episodes cut at 1,000 frames raise the reward-hacking flag."""
     stalling = [ep(50.0, length=1000, terminated=False, truncated=True, outcome="timeout")] * 3
     assert any("truncation" in f for f in flags(summarize(stalling)))

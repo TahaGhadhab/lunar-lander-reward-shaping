@@ -33,6 +33,8 @@ src/lander/
   evaluate.py   CLI: loads a model, evaluates on the PLAIN env (no custom wrapper)
   record.py     CLI: records an MP4 of a model with RecordVideo
   plots.py      learning curves from Monitor CSVs (mean +/- std across seeds)
+  studio/       live web app (python -m lander.studio): train, watch, test, unit tests; stdlib server + SSE
+  scene.py      cosmetic renderer (never changes physics); watch.py pygame viewer
 tests/          pytest: reward math, wrapper pass-through, env smoke test
 runs/<reward>/seed<N>/   model.zip, monitor CSVs, eval.json, config.json   (git-ignored)
 media/          final clips + plots kept for the README (committed, small files only)

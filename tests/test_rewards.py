@@ -27,6 +27,7 @@ def test_passthrough(scripted, name, terminated, truncated):
 
 
 def test_shaped_episode_totals(scripted):
+    """At the end of an episode the wrapper reports the shaped return, shaping total and length."""
     transitions = [(obs(), 1.0, False, False, {}), (obs(), 2.0, True, False, {})]
     env = make_reward_wrapper(scripted(obs(), transitions), "baseline")
     env.reset()
@@ -55,6 +56,7 @@ def test_baseline_identity():
 
 
 def test_unknown_reward_raises(scripted):
+    """Asking for a reward that does not exist fails loudly with the valid names."""
     with pytest.raises(ValueError, match="unknown reward"):
         make_reward_wrapper(scripted(obs(), []), "does_not_exist")
 
@@ -71,6 +73,7 @@ def step_once(scripted, name, next_obs, terminated=False, truncated=False, reset
 
 
 def test_time_penalty_math(scripted):
+    """time_penalty subtracts exactly 0.05 per frame from the built-in reward."""
     r, terms = step_once(scripted, "time_penalty", obs())
     assert terms == {"time_fee": -0.05} and r == pytest.approx(-0.05)
 
@@ -85,11 +88,13 @@ def test_time_penalty_math(scripted):
     ],
 )
 def test_upright_slow_bonus_thresholds(scripted, state, paid):
+    """The +1 bonus is paid just inside the tilt and speed limits, not outside, and also on the ground."""
     _, terms = step_once(scripted, "upright_slow_bonus", state)
     assert terms["upright_slow"] == paid
 
 
 def test_score_shape():
+    """The upright-and-slow score is 1 when still and upright, falling linearly to 0 at the limits."""
     assert upright_slow_score(np.array(obs()), 0.2, 0.2) == 1.0
     assert upright_slow_score(np.array(obs(tilt=0.1)), 0.2, 0.2) == pytest.approx(0.5)
     assert upright_slow_score(np.array(obs(tilt=0.5)), 0.2, 0.2) == 0.0
@@ -106,6 +111,7 @@ def test_potential_telescopes(scripted):
 
 
 def test_potential_terminal_is_zero_but_truncation_is_not(scripted):
+    """The potential drops to 0 when an episode really ends, but not when it is only cut by the time limit."""
     start = obs()  # Phi = 10
     _, term = step_once(scripted, "upright_slow_potential", obs(), terminated=True, reset_obs=start)
     _, trunc = step_once(scripted, "upright_slow_potential", obs(), truncated=True, reset_obs=start)
@@ -114,6 +120,7 @@ def test_potential_terminal_is_zero_but_truncation_is_not(scripted):
 
 
 def test_potential_resets_between_episodes(scripted):
+    """The potential is recomputed at each new episode, so no bonus leaks between episodes."""
     transitions = [(obs(tilt=0.5), 0.0, True, False, {})]
     env = UprightSlowPotential(scripted(obs(), transitions), k=10.0, gamma=1.0)
     env.reset()
@@ -132,6 +139,7 @@ def test_stalling_pays_nothing_under_potential(scripted):
 
 
 def test_fixed_adds_fee_to_potential(scripted):
+    """upright_slow_fixed is the potential-based term plus the 0.05 fee per frame."""
     _, terms = step_once(scripted, "upright_slow_fixed", obs())
     assert set(terms) == {"potential", "time_fee"} and terms["time_fee"] == -0.05
 

@@ -68,22 +68,23 @@ class ShapingWrapper(gym.Wrapper):
         return obs, shaped_reward, terminated, truncated, info
 
 
-# name -> factory(env) -> wrapper. Constants live in the factory so a name always means one formula.
-REWARDS: dict[str, Callable[[gym.Env], ShapingWrapper]] = {}
+# name -> factory(env, **constants) -> wrapper. Defaults live in the factory, so a bare name always means
+# one formula; constants can be overridden explicitly (studio, ablations) and are recorded in config.json.
+REWARDS: dict[str, Callable[..., ShapingWrapper]] = {}
 
 
-def register(name: str, factory: Callable[[gym.Env], ShapingWrapper]) -> None:
+def register(name: str, factory: Callable[..., ShapingWrapper]) -> None:
     if name in REWARDS:
         raise ValueError(f"reward {name!r} already registered")
     REWARDS[name] = factory
 
 
-def make_reward_wrapper(env: gym.Env, name: str) -> ShapingWrapper:
+def make_reward_wrapper(env: gym.Env, name: str, **constants: Any) -> ShapingWrapper:
     try:
         factory = REWARDS[name]
     except KeyError:
         raise ValueError(f"unknown reward {name!r}; valid: {sorted(REWARDS)}") from None
-    return factory(env)
+    return factory(env, **constants)
 
 
 def upright_slow_score(obs: np.ndarray, tilt_max: float, speed_max: float) -> float:
@@ -166,4 +167,4 @@ register("baseline", ShapingWrapper)
 register("time_penalty", TimePenalty)
 register("upright_slow_bonus", UprightSlowBonus)
 register("upright_slow_potential", UprightSlowPotential)
-register("upright_slow_fixed", lambda env: UprightSlowPotential(env, fee=0.05))
+register("upright_slow_fixed", lambda env, **kw: UprightSlowPotential(env, **{"fee": 0.05, **kw}))

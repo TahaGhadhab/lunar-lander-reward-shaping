@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lander Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+        integrity="sha384-bs/nf9FbdNouRbMiFcrcZfLXYPKiPaGVGplVbv7dLGECccEXDW+S3zjqSKR5ZEaD" crossorigin="anonymous"></script>
+<style>
+  :root { --black: #111111; --blue: #1550c8; --red: #c8231e; --hair: #dbe5f7; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #ffffff; color: var(--black); font: 15px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  .page { max-width: 1320px; margin: 0 auto; padding: 0 40px 80px; }
+  header.top { position: sticky; top: 0; z-index: 10; background: #ffffff; padding: 18px 40px 12px; border-bottom: 1px solid var(--hair);
+               display: flex; align-items: baseline; gap: 28px; flex-wrap: wrap; }
+  header.top h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+  header.top nav { display: flex; gap: 20px; flex-wrap: wrap; }
+  header.top nav a { color: var(--blue); text-decoration: none; font-weight: 500; }
+  header.top nav a:hover { text-decoration: underline; }
+  #status { margin-left: auto; font-weight: 600; color: var(--blue); }
+  #status.bad { color: var(--red); }
+  section { padding-top: 44px; scroll-margin-top: 60px; }
+  h2 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 .num { color: var(--blue); margin-right: 10px; }
+  h3 { font-size: 16px; margin: 26px 0 2px; }
+  .lead { margin: 0 0 18px; max-width: 920px; }
+  .blue { color: var(--blue); } .red { color: var(--red); } .bold { font-weight: 650; }
+  .note { font-size: 13.5px; margin: 0 0 8px; max-width: 760px; }
+  .row { display: flex; gap: 36px; flex-wrap: wrap; align-items: flex-start; }
+  .col { flex: 1 1 380px; min-width: 300px; }
+  .live-img { width: 600px; max-width: 100%; height: auto; display: block; background: #0a0f24; border-radius: 6px; aspect-ratio: 3 / 2; }
+  canvas.net { width: 620px; max-width: 100%; height: auto; display: block; }
+  .telemetry { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px 24px; margin-top: 12px; max-width: 600px; }
+  .telemetry div span { display: block; font-size: 12.5px; color: var(--blue); }
+  .telemetry div b { font-size: 18px; font-variant-numeric: tabular-nums; }
+  .probs { margin-top: 10px; max-width: 600px; }
+  .prob { display: grid; grid-template-columns: 120px 1fr 48px; align-items: center; gap: 10px; font-size: 13.5px; }
+  .prob i { display: block; height: 8px; border-radius: 4px; background: var(--c); width: 0; }
+  .prob.on { font-weight: 700; }
+  .controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; margin: 14px 0 6px; }
+  label.inline { display: flex; flex-direction: column; font-size: 12.5px; color: var(--blue); gap: 2px; }
+  select, input[type=number], input[type=text] { font: inherit; color: var(--black); background: transparent; border: 0;
+    border-bottom: 1.5px solid var(--blue); padding: 3px 2px; min-width: 90px; outline: none; }
+  select:focus, input:focus { border-bottom-color: var(--black); }
+  input[type=checkbox] { accent-color: var(--blue); width: 16px; height: 16px; vertical-align: middle; }
+  button { font: inherit; font-weight: 600; border: 0; border-radius: 6px; padding: 8px 16px; cursor: pointer; background: var(--blue); color: #fff; }
+  button.stop { background: var(--red); }
+  button.link { background: none; color: var(--blue); padding: 8px 4px; text-decoration: underline; }
+  button:disabled { opacity: .45; cursor: default; }
+  .progress { height: 4px; background: var(--hair); border-radius: 2px; margin: 10px 0 4px; max-width: 1240px; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width .3s; }
+  .params { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 40px; margin-top: 10px; }
+  .params h3 { color: var(--blue); margin-top: 18px; }
+  .param { margin: 10px 0 12px; }
+  .param .lab { font-weight: 650; font-size: 14px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .param .lab .changed { color: var(--red); font-size: 12px; font-weight: 600; }
+  .param .def { font-size: 12px; color: var(--blue); font-weight: 400; }
+  .param .why { font-size: 13px; margin-top: 3px; }
+  .param input, .param select { width: 100%; }
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 18px 44px; margin-top: 8px; }
+  .chart { position: relative; height: 270px; }
+  .big { display: flex; gap: 34px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .big div span { display: block; font-size: 12.5px; color: var(--blue); }
+  .big div b { font-size: 30px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-size: 12.5px; color: var(--blue); font-weight: 600; padding: 6px 10px 6px 0; border-bottom: 1.5px solid var(--blue); }
+  td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  td.num, th.num { text-align: right; }
+  .tests td.st { width: 92px; font-weight: 700; white-space: nowrap; }
+  .tests td.name { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; }
+  .tests td.file { color: var(--blue); white-space: nowrap; }
+  .tests pre { color: var(--red); font-size: 12px; white-space: pre-wrap; margin: 6px 0 0; }
+  .st.passed { color: var(--blue); } .st.failed, .st.error { color: var(--red); }
+  .st.running { color: var(--black); } .st.queued { color: var(--black); font-weight: 400; }
+  .scroll { max-height: 420px; overflow: auto; }
+  .explain dt { font-weight: 700; margin-top: 14px; color: var(--blue); }
+  .explain dd { margin: 2px 0 0 0; max-width: 900px; }
+  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; color: var(--blue); }
+  .msg { min-height: 1.4em; font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Lander Studio</h1>
+  <nav>
+    <a href="#watch">Watch</a><a href="#train">Train</a><a href="#test">Test the agent</a>
+    <a href="#unit">Unit tests</a><a href="#experiments">Experiments</a><a href="#how">How it works</a>
+  </nav>
+  <span id="status">connecting…</span>
+</header>
+<div class="page">
+
+<section id="watch">
+  <h2><span class="num">1</span>Watch the agent fly</h2>
+  <p class="lead">The lander on the left is flown by the network on the right, live. Each frame, the 8 numbers the agent
+    sees enter on the left of the network, flow through the hidden neurons, and come out as a probability for each of the
+    4 engines. <span class="blue">Blue = negative</span>, <span class="red">red = positive</span>. During training the
+    network shown here is refreshed after every update, so you watch it improve.</p>
+  <div class="controls">
+    <label class="inline">Model flying
+      <select id="pilotSel"></select></label>
+    <label class="inline">Speed
+      <select id="viewSpeed"><option value="0.5">0.5×</option><option value="1" selected>1× real time</option>
+        <option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
+    <label class="inline"><span>Live view</span><span><input type="checkbox" id="viewOn" checked> on</span></label>
+    <span class="msg blue" id="pilotMsg"></span>
+  </div>
+  <div class="row">
+    <div>
+      <img class="live-img" id="liveImg" alt="lander, live">
+      <div class="telemetry">
+        <div><span>model</span><b class="blue" id="tmModel" style="font-size:14px">–</b></div>
+        <div><span>episode · frame</span><b id="tmFrame">–</b></div>
+        <div><span>return so far</span><b id="tmRet">–</b></div>
+        <div><span>critic V(s)</span><b id="tmValue">–</b></div>
+        <div><span>last episode</span><b id="tmLast">–</b></div>
+      </div>
+      <div class="probs" id="probs"></div>
+    </div>
+    <div class="col">
+      <canvas class="net" id="net" width="1240" height="820"></canvas>
+      <p class="note" id="netNote"></p>
+    </div>
+  </div>
+</section>
+
+<section id="train">
+  <h2><span class="num">2</span>Train a model, live</h2>
+  <p class="lead">Change any setting, press <b>Start training</b>, and watch the curves, the weights and the lander above
+    evolve in real time. Every setting explains why its default was chosen. Changed values are marked in
+    <span class="red">red</span>. <b>Reset to defaults</b> brings back the project's settings.</p>
+  <div class="controls">
+    <label class="inline">Preset
+      <select id="presetSel"></select></label>
+    <button id="startBtn">Start training</button>
+    <button id="stopBtn" class="stop" disabled>Stop</button>
+    <button id="resetBtn" class="link">Reset to defaults</button>
+    <span class="msg" id="trainMsg"></span>
+  </div>
+  <div class="progress"><i id="trainBar"></i></div>
+  <div class="note blue" id="trainInfo"></div>
+  <div class="params" id="params"></div>
+
+  <h3>Live training curves</h3>
+  <p class="note">One point per PPO update. Returns are the <b>plain</b> game score, smoothed over the last 100
+    training episodes (exploration on, so below the test score).</p>
+  <div class="charts">
+    <div><b>Return: what it achieves vs what it is paid</b>
+      <p class="note">If the red line (shaped reward) climbs while the blue one (real score) does not, the agent is
+        gaming the reward.</p><div class="chart"><canvas id="cRet"></canvas></div></div>
+    <div><b>Episode length and time-outs</b>
+      <p class="note">Episodes cut at 1,000 frames (red) are the signature of a lander that hovers instead of
+        landing.</p><div class="chart"><canvas id="cLen"></canvas></div></div>
+    <div><b>Losses</b>
+      <p class="note">Policy loss (blue), value loss (red, right axis), entropy (green): entropy falling = the agent
+        becomes more certain.</p><div class="chart"><canvas id="cLoss"></canvas></div></div>
+    <div><b>Update size and critic quality</b>
+      <p class="note">Approx. KL and clip fraction measure how far each update moves the policy (PPO keeps them small).
+        Explained variance near 1 = the critic predicts returns well.</p><div class="chart"><canvas id="cStab"></canvas></div></div>
+  </div>
+
+  <h3>Weights, live</h3>
+  <div class="charts">
+    <div><b>Size of each weight matrix</b>
+      <p class="note">L2 norm per layer. Growth shows where learning happens.</p>
+      <div class="chart"><canvas id="cNorms"></canvas></div></div>
+    <div><b>How much the weights move per update</b>
+      <p class="note">Large early (learning fast), smaller later (fine-tuning).</p>
+      <div class="chart"><canvas id="cChange"></canvas></div></div>
+    <div><b>Distribution of the actor's weights</b>
+      <p class="note">Now (blue bars) against the random start (red line).</p>
+      <div class="chart"><canvas id="cHist"></canvas></div></div>
+    <div><b>First layer: which input each neuron listens to</b>
+      <p class="note">Rows = the 8 inputs, columns = neurons of layer 1. <span class="red">Red</span> positive,
+        <span class="blue">blue</span> negative weights.</p>
+      <canvas id="heat" width="1040" height="300" style="width:100%"></canvas></div>
+  </div>
+</section>
+
+<section id="test">
+  <h2><span class="num">3</span>Test the agent</h2>
+  <p class="lead">An evaluation flies a frozen copy of a model on fixed landing sites, with the plain game score. This
+    is how every number in the project was measured. Watch it live, or run it at full speed.</p>
+  <div class="controls">
+    <label class="inline">Model to test<select id="evalModel"></select></label>
+    <label class="inline">Episodes<input type="number" id="evalN" min="1" max="500"></label>
+    <label class="inline">First seed<input type="number" id="evalSeed" min="10000" max="99999"></label>
+    <label class="inline"><span>Deterministic</span><span><input type="checkbox" id="evalDet" checked> most likely action</span></label>
+    <label class="inline"><span>Watch</span><span><input type="checkbox" id="evalWatch" checked> live</span></label>
+    <label class="inline">Speed<select id="evalSpeed"><option value="1">1×</option><option value="2">2×</option>
+      <option value="4" selected>4×</option><option value="8">8×</option><option value="16">16×</option></select></label>
+    <button id="evalBtn">Run test</button><button id="evalStop" class="stop" disabled>Stop</button>
+    <span class="msg" id="evalMsg"></span>
+  </div>
+  <div class="progress"><i id="evalBar"></i></div>
+  <div class="big" id="evalBig"></div>
+  <div class="row" style="margin-top:12px">
+    <div><img class="live-img" id="evalImg" alt="test episode, live" style="width:480px"></div>
+    <div class="col">
+      <b>Score of each test episode</b>
+      <p class="note"><span class="blue">Blue</span> landed, <span class="red">red</span> crashed or flew away,
+        orange cut at 1,000 frames. Dashed: solved (200). Black line: running mean.</p>
+      <div class="chart"><canvas id="cEval"></canvas></div>
+    </div>
+  </div>
+  <div class="scroll" style="margin-top:16px"><table id="evalTable"></table></div>
+</section>
+
+<section id="unit">
+  <h2><span class="num">4</span>Unit tests</h2>
+  <p class="lead">The automated checks behind the code: the reward maths, the wrappers, the evaluation and the
+    renderer. Run them all, or one by one, and watch them pass live.</p>
+  <div class="controls">
+    <button id="testsAll">Run all tests</button>
+    <button id="testsFailed" class="link">Rerun failed</button>
+    <span class="msg" id="testsMsg"></span>
+  </div>
+  <div class="progress"><i id="testsBar"></i></div>
+  <div class="big" id="testsBig"></div>
+  <table class="tests" id="testsTable"></table>
+</section>
+
+<section id="experiments">
+  <h2><span class="num">5</span>Recorded experiments</h2>
+  <p class="lead">The project's actual results: each reward trained with 3 seeds × 1M steps, each seed tested on 50
+    fixed episodes. These are the numbers in the README.</p>
+  <div class="charts">
+    <div><b>Mean score per reward</b><p class="note">Bars: mean of 3 seeds. Dots: each seed. Dashed: solved.</p>
+      <div class="chart"><canvas id="xRet"></canvas></div></div>
+    <div><b>How test episodes end</b><p class="note">The hacked reward (upright_slow_bonus) times out instead of
+      landing.</p><div class="chart"><canvas id="xOut"></canvas></div></div>
+    <div><b>Training curves (plain score)</b><p class="note">Mean of 3 seeds per reward.</p>
+      <div class="chart"><canvas id="xCurve"></canvas></div></div>
+    <div><b>Learning progression by checkpoint</b><p class="note">Test score every 50k steps. The hacked run
+      lands at first, then unlearns it.</p><div class="chart"><canvas id="xProg"></canvas></div></div>
+  </div>
+  <div style="margin-top:16px"><table id="xTable"></table></div>
+</section>
+
+<section id="how" class="explain">
+  <h2><span class="num">6</span>How it works</h2>
+  <dl>
+    <dt>The task</dt>
+    <dd>Gymnasium's <code>LunarLander-v3</code>. Each frame the agent sees 8 numbers (position, speed, tilt, spin, leg
+      contacts) and fires one of 4 engines. The built-in score rewards getting closer, slower and straighter, costs
+      fuel, and gives +100 for coming to rest or −100 for a crash. An episode is cut at 1,000 frames.</dd>
+    <dt>The learner: PPO</dt>
+    <dd>Proximal Policy Optimization flies 16 landers, collects 16,384 transitions, then nudges the network a small,
+      clipped step towards actions that did better than the critic expected. Small steps keep one lucky stretch from
+      wrecking the policy.</dd>
+    <dt>The network</dt>
+    <dd>Two separate small networks. The <b>actor</b> (8 → 64 → 64 → 4, tanh) outputs a probability per engine.
+      The <b>critic</b> (8 → 64 → 64 → 1) estimates V(s), the score still to come.</dd>
+    <dt>Reward hacking</dt>
+    <dd>Adding “+1 for every upright and slow frame” pays for <i>being</i> in a state. Hovering until the 1,000-frame
+      limit then earns about +800, against about +100 for landing (which ends the payments). The agent learns to
+      hover. Its critic values hovering at about 735, while the real score stays near 0.</dd>
+    <dt>The fix</dt>
+    <dd>Pay for <i>improvement</i> instead: F = γ·Φ(s′) − Φ(s). Over an episode these terms cancel out except for the
+      first and last, so there is nothing to farm, and Ng, Harada and Russell (1999) proved this never changes
+      which policy is optimal.</dd>
+    <dt>Fair testing</dt>
+    <dd>Every model is tested on the plain score, with the most likely action, on the same 50 fixed landing sites
+      (seeds 10,000+, never used in training), and a verdict needs 3 training seeds.</dd>
+  </dl>
+</section>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

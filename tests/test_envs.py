@@ -4,6 +4,7 @@ from lander.envs import ENV_ID, make_env
 
 
 def test_make_env_smoke():
+    """LunarLander-v3 is created, returns 8 observations, and keeps its 1,000-frame time limit."""
     env = make_env("baseline", seed=0)
     assert env.spec.id == ENV_ID
     o, _ = env.reset(seed=0)

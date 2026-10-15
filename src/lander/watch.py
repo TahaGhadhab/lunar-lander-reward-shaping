@@ -129,8 +129,8 @@ class Viewer:
             self.bar(x0 + 130, y + 3, 120, 9, obs[i] / 1.5, (200, 170, 90), signed=True)
         self.text("hidden layer 1 / 2 (64 tanh each)", (x0, 330), (180, 180, 190))
         if snap:
-            self.grid(snap["h1"], x0, 350, cell=6)
-            self.grid(snap["h2"], x0 + 80, 350, cell=6)
+            for k, layer in enumerate(snap["hidden"][:2]):  # first two hidden layers, any width
+                self.grid(layer[:64], x0 + 80 * k, 350, cell=6)
             self.text("red > 0, blue < 0", (x0 + 170, 370), (120, 120, 130), self.small)
         else:
             self.text("(random agent: no network)", (x0, 350), (120, 120, 130), self.small)

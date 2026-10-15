@@ -24,11 +24,12 @@ def make_env(
     seed: int | None = None,
     render_mode: str | None = None,
     monitor_file: str | Path | None = None,
+    reward_kwargs: dict | None = None,
 ) -> gym.Env:
     env = gym.make(ENV_ID, render_mode=render_mode)
     if monitor_file is not None:
         env = Monitor(env, str(monitor_file))
-    env = make_reward_wrapper(env, reward_name)
+    env = make_reward_wrapper(env, reward_name, **(reward_kwargs or {}))
     if seed is not None:
         env.reset(seed=seed)
         env.action_space.seed(seed)
@@ -41,6 +42,7 @@ def make_vec_env(
     n_envs: int,
     monitor_dir: str | Path | None = None,
     vec: str = "subproc",
+    reward_kwargs: dict | None = None,
 ) -> VecEnv:
     """`n_envs` copies; env i gets seed `seed * 1000 + i` (disjoint from eval seeds 10_000+ if seed < 10)."""
     if monitor_dir is not None:
@@ -49,7 +51,7 @@ def make_vec_env(
     def factory(i: int) -> Callable[[], gym.Env]:
         def _init() -> gym.Env:
             monitor_file = None if monitor_dir is None else Path(monitor_dir) / str(i)
-            return make_env(reward_name, monitor_file=monitor_file)
+            return make_env(reward_name, monitor_file=monitor_file, reward_kwargs=reward_kwargs)
 
         return _init
 

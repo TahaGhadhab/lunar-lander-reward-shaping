@@ -12,7 +12,7 @@ requires-python = ">=3.10,<3.13"
 where = ["src"]
 
 [tool.setuptools.package-data]
-lander = ["dashboard_template.html"]
+lander = ["studio/static/*"]
 
 [tool.ruff]
 line-length = 110

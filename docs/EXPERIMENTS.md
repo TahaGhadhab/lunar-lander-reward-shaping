@@ -207,3 +207,14 @@ Write the hypothesis **before** looking at the results.
   750k steps on. Baseline: crashes / out of bounds until about 300k, then lands on 90 to 100% from 400k.
 - **Critic:** the hacked agent's value estimate stays near 735 for the whole hovering episode (theory in DESIGN 9.1:
   about 0.8 / (1 - 0.999) = 800); its value-head weight norm grows to about 90 versus about 24 for the baseline.
+
+### 2026-10-15 | Lander Studio (live training, testing and unit tests in the browser)
+- `python -m lander.studio`: stdlib HTTP server + server-sent events, bound to 127.0.0.1. Training uses the same
+  env factory, rewards and PPO as `lander.train`; reward constants, PPO hyperparameters and the network
+  (layers, widths, activation) are editable, and runs are saved to `runs/studio/` with a full `config.json`.
+- Fidelity checks: a studio evaluation of baseline seed 2 gives exactly the per-episode scores of
+  `lander.evaluate` (247.53, 268.40, 288.10, 236.87, 246.47 on seeds 10,000 to 10,004); rendering never touches
+  the lander (particles only collide with the ground, and `test_scene` checks it).
+- Live demo, 300k steps with `upright_slow_bonus`: the shaped training return climbed to about 200 while the plain
+  one stayed near 0, and time-outs rose to 30%. Reward hacking is visible as it happens. Training speed with the
+  live view on: about 2,600 to 3,000 steps/s (versus 3,900 without it).

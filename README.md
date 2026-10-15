@@ -66,38 +66,41 @@ Three implementation details matter (all covered by tests in [`tests/test_reward
   next to the shaped one, 3 seeds per variant, writing the hypothesis before each run
   ([`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md)), and recording versions and the git hash in every run's `config.json`.
 
-## See it: two interfaces
-Both need trained models in `runs/` (train them as below; models are not committed).
-
-**1. The lander, live** (`python -m lander.watch`): a game window, with what the network sees and decides next to it.
+## See it live: Lander Studio
 ```bash
-python -m lander.watch --random                                        # untrained agent: tumbles and crashes
-python -m lander.watch --progression runs/progression/baseline/seed0   # one flight per checkpoint: crash -> landing
-python -m lander.watch --model runs/upright_slow_bonus/seed2           # the hacked agent hovering
-python -m lander.watch --compare                                       # random, baseline, hack, fix in turn
+python -m lander.studio          # opens http://127.0.0.1:8765/ in your browser
 ```
-Keys: SPACE pause, N next, UP/DOWN speed, ESC quit. Graphics: a textured moon and a rocket-shaped lander
-drawn by `lander/scene.py` from the physics state (purely cosmetic: a test checks that observations and
-rewards are identical with and without it). `--classic` shows Gymnasium's original flat drawing. Progression runs are trained with
-`--checkpoint-every 50000 --run-dir runs/progression/<reward>/seed<N>`.
+A local web app, built on Python's standard library with no extra dependency, to **train, watch and test the agent
+in real time**:
+- **Watch:** the lander flies live, next to its network. You see the 8 inputs, the hidden neurons lighting up
+  (blue negative, red positive), the probability of each engine and the critic's value V(s). During training the
+  network is refreshed after every PPO update, so you watch it go from crashing to landing (or to hovering).
+- **Train:** change the reward and its constants, every PPO hyperparameter, the network (layers, widths, activation)
+  and the training budget. Then follow the return (real score versus what PPO is paid), the episode length and
+  time-outs, the losses, the KL and clip fraction, and the weights (norms, change per update, distribution,
+  first-layer heatmap), all live. Every setting explains why its default was chosen. Presets show the classic
+  experiments (reward hacking, the fix, tiny or big networks, a learning rate x10, no exploration). **Reset to
+  defaults** restores the project's settings. Trained models are saved to `runs/studio/`.
+- **Test the agent:** choose a model, the number of episodes, the seeds and the speed, and watch every test episode
+  live with its score. The numbers match `lander.evaluate` exactly.
+- **Unit tests:** all 50 tests, each with what it checks. Run all of them, rerun the failed ones or run one, and
+  watch them pass live.
+- **Recorded experiments** and **How it works**, for presenting the results.
 
-![Watch window: the hacked agent](media/watch_hover.png)
+![Lander Studio: watching the network fly during training](media/studio_watch.png)
+![Lander Studio: live training curves and weights (here the hacked reward: paid ~200, real score ~0)](media/studio_training.png)
+![Lander Studio: recorded experiments and learning progression](media/studio_experiments.png)
 
-The panel shows the critic's estimate V(s). It stays around 735 while the hacked agent hovers; the baseline, during its descent, is around 50.
-The network has learned that hovering is worth a fortune.
+With the hacked reward you can watch the hack *take over*. Seed 2 first learns to land (up to 30% of episodes
+around 400k to 650k steps), then unlearns it and hovers. Its critic values hovering at about 735 while the real
+score stays near 0.
 
-**2. The machine-learning dashboard** (`python -m lander.dashboard`): a local web page with:
-- results;
-- training curves, and shaped versus plain return;
-- learning progression by checkpoint;
-- a frame-by-frame replay of the actor network next to the video;
-- weights and the test suite.
-
-![Dashboard: network replay](media/dashboard_network.png)
-![Dashboard: learning progression](media/dashboard_progression.png)
-
-The progression panel shows the hack *taking over*. With the bonus, seed 2 first learns to land (up to 30% of
-episodes around 400k to 650k steps), then unlearns it and hovers on every episode.
+**Game window** (`python -m lander.watch`, pygame): the same live view without a browser. Use `--random`,
+`--model runs/<reward>/seed<N>`, `--progression runs/progression/<reward>/seed<N>` or `--compare`.
+Keys: SPACE pause, N next, UP/DOWN speed, ESC quit. The graphics (textured moon, rocket-shaped lander, exhaust,
+explosions) come from `lander/scene.py`. They are purely cosmetic: a test checks that observations and rewards are
+identical with and without them. `--classic` shows Gymnasium's original drawing. Both tools need trained models in
+`runs/` (train as below; models are not committed).
 
 ## Reproduce one result (about 10 minutes on a laptop CPU)
 Requires Python **3.12.1 or later** in the 3.12 line. 3.12.0 has a `zipfile` bug that breaks loading saved models.
@@ -115,9 +118,9 @@ Across machines expect the same ballpark; bit-identical numbers are not guarante
 ```
 src/lander/  envs.py (env + Monitor + reward wrapper), rewards.py (reward variants), train.py,
              evaluate.py (plain env, deterministic, 50 fixed seeds), record.py, plots.py,
-             watch.py (live viewer), scene.py (textured renderer), dashboard.py + dashboard_template.html,
-             introspect.py (network internals)
-tests/       wrapper pass-through, shaping math, potential telescoping, evaluation metrics, introspection, renderer (39 tests)
+             studio/ (live web app: server, jobs, page), watch.py (game window), scene.py (renderer),
+             introspect.py (network internals), dashboard.py (reads recorded results)
+tests/       wrapper pass-through, shaping math, potential telescoping, evaluation metrics, introspection, renderer, studio (50 tests)
 docs/        DESIGN.md (design + critical review), PLAN.md, EXPERIMENTS.md (dated log of every run)
 ```
 Stack: Python 3.12, Gymnasium 1.3 (Box2D), Stable-Baselines3 2.9 (PPO, `MlpPolicy` 2×64), PyTorch 2.14 on CPU.
