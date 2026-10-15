@@ -68,3 +68,39 @@ def test_model_paths_cannot_escape_runs(tmp_path):
         safe_model_path("runs/../secret.zip", tmp_path)
     with pytest.raises(ValueError):
         safe_model_path("secret.zip", tmp_path)
+
+
+def test_server_refuses_other_websites():
+    """Other websites (wrong Host, foreign Origin, non-JSON POST) are refused; the page itself works."""
+    import http.client
+    import threading
+    from http.server import ThreadingHTTPServer
+
+    from lander.studio.server import make_handler
+
+    class FakeStudio:
+        stopped = False
+
+        def stop_training(self):
+            FakeStudio.stopped = True
+
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), None)
+    port = srv.server_address[1]
+    srv.RequestHandlerClass = make_handler(FakeStudio(), port)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+    def post(headers):
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        conn.request("POST", "/api/train/stop", body="{}", headers=headers)
+        return conn.getresponse().status
+
+    host, js = {"Host": f"127.0.0.1:{port}"}, {"Content-Type": "application/json"}
+    try:
+        assert post({"Host": f"evil.example:{port}", **js}) == 403  # DNS rebinding
+        assert post({**host, **js, "Origin": "https://evil.example"}) == 403  # cross-site
+        assert post({**host, "Content-Type": "text/plain"}) == 415  # simple CORS request
+        assert not FakeStudio.stopped
+        assert post({**host, **js, "Origin": f"http://127.0.0.1:{port}"}) == 200
+        assert FakeStudio.stopped
+    finally:
+        srv.shutdown()

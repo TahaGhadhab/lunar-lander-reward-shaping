@@ -24,9 +24,30 @@ CONTENT_TYPES = {
 }
 
 
-def make_handler(studio: Studio):
+def make_handler(studio: Studio, port: int = 8765):
+    hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+    origins = {f"http://{h}" for h in hosts}
+
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
+
+        def refuse(self, status: int, why: str) -> None:
+            self.send_json({"error": why}, status)
+
+        def trusted(self, post: bool) -> bool:
+            """Block other websites: DNS rebinding (wrong Host), cross-site requests (foreign Origin), and
+            'simple' cross-origin POSTs that skip the CORS preflight (non-JSON Content-Type)."""
+            if self.headers.get("Host") not in hosts:
+                self.refuse(403, "unexpected Host header")
+                return False
+            origin = self.headers.get("Origin")
+            if origin is not None and origin not in origins:
+                self.refuse(403, "cross-origin request refused")
+                return False
+            if post and not (self.headers.get("Content-Type") or "").startswith("application/json"):
+                self.refuse(415, "POST requires Content-Type: application/json")
+                return False
+            return True
 
         def log_message(self, *args):  # keep the terminal quiet
             pass
@@ -82,6 +103,8 @@ def make_handler(studio: Studio):
 
         # ---------- routes
         def do_GET(self):  # noqa: N802
+            if not self.trusted(post=False):
+                return
             route = self.path.split("?", 1)[0]
             if route in ("/", "/index.html"):
                 return self.send_static("index.html")
@@ -119,6 +142,8 @@ def make_handler(studio: Studio):
             self.send_error(404)
 
         def do_POST(self):  # noqa: N802
+            if not self.trusted(post=True):
+                return
             route = self.path.split("?", 1)[0]
             try:
                 body = self.read_json()
@@ -159,7 +184,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) 
     studio = Studio()
     threading.Thread(target=studio.collect_tests, daemon=True, name="collect").start()
     threading.Thread(target=studio.load_progression, daemon=True, name="progression").start()
-    server = ThreadingHTTPServer((host, port), make_handler(studio))
+    server = ThreadingHTTPServer((host, port), make_handler(studio, port))
     server.daemon_threads = True
     url = f"http://{host}:{port}/"
     print(f"Lander Studio running at {url}  (Ctrl+C to stop)")
