@@ -21,3 +21,5 @@ select = ["E", "F", "I", "B", "UP", "NPY"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+# Box2D's SWIG bindings warn on import under Python 3.12; not our code.
+filterwarnings = ["ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]
