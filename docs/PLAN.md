@@ -41,7 +41,7 @@ I `record.py` is tried on the dry-run model.
 - **Done when:** mean return across the 3 seeds is at least 200 and `media/baseline_landing.mp4` (median seed) exists.
   If a seed is below 200, report it and propose one change (more steps first, for **every** reward: amendment H).
 
-### [ ] Phase 4: Tests and a first shaped reward (about 45 min plus training)
+### [x] Phase 4: Tests and a first shaped reward (about 45 min plus training)
 - `tests/`: shaping math on hand-made transitions, potential telescoping, registry, env smoke test, eval summary.
 - Reward `time_penalty`: a small fee per frame (-0.05, justified in `EXPERIMENTS.md`). 3 seeds.
 - **Done when:** tests pass and the agent still lands (plain-env eval close to baseline) with a shorter mean episode length.
@@ -73,7 +73,7 @@ I `record.py` is tried on the dry-run model.
 | Reward | Seeds | Mean return (plain env) | Success % | Mean ep. length | Truncation % | Clip |
 |--------|-------|-------------------------|-----------|-----------------|--------------|------|
 | baseline | 0,1,2 | 257.3 [252.6] | 98 | 366 | 2 | media/baseline_landing.mp4 |
-| time_penalty | | | | | | |
+| time_penalty | 0,1,2 | 266.7 [265.8] | 100 | 301 | 0 | media/time_penalty_landing.mp4 |
 | upright_slow_bonus | | | | | | |
 | upright_slow_potential | | | | | | |
 | upright_slow_fixed | | | | | | |

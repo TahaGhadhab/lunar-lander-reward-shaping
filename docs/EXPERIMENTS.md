@@ -75,3 +75,27 @@ Write the hypothesis **before** looking at the results.
   1/6 of the main-engine cost per frame (0.3), enough to discourage dawdling, not enough to dominate.
 - **Command:** `python -m lander.train --reward time_penalty --seed <s> --steps 1000000 --vec dummy --torch-threads 1`
 - **Hyperparams changed vs default:** none
+- **Results (plain env, 50 deterministic episodes per seed):**
+
+  | Seed | Mean +/- std | Success % | Mean length | Truncation % | Landed % |
+  |------|--------------|-----------|-------------|--------------|----------|
+  | 0 | 265.8 +/- 18.9 | 100 | 309 | 0 | 100 |
+  | 1 | 267.4 +/- 18.6 | 100 | 297 | 0 | 100 |
+  | 2 | 266.9 +/- 19.5 | 100 | 296 | 0 | 100 |
+  | **all** | **266.7** (worst 265.8) | **100** | **301** | **0** | **100** |
+
+- **Clip:** `media/time_penalty_landing.mp4` (median seed 2).
+- **Verdict:** confirmed. Lands on every seed, 18% shorter episodes (301 vs 366 frames), and slightly *higher*
+  plain return than baseline (+9.4) with lower spread: less time hovering near the pad also burns less fuel.
+  With 3 seeds per side and non-overlapping per-seed ranges (252.6-259.7 vs 265.8-267.4) the gain looks real,
+  but it is small; do not over-sell it.
+
+### 2026-10-15 | reward audit (all five rewards, before Phase 5-6 training)
+- Read-only audit following `.claude/agents/reward-auditor.md`. Verdict: OK to run for every reward; no bug found.
+- Confirmed by code and by forcing actions on baseline models: a side-engine impulse is applied with `wake=True`
+  (`lunar_lander.py:614-618`), and Box2D puts a body to sleep after 0.5 s (25 frames) at rest. So a landed lander
+  that fires a side engine at least every 24 frames never terminates. Forced "land then twitch every 20 frames":
+  1000 frames, truncated, plain return 174.6 (vs 275.7 when allowed to rest). The plain return drops only by the
+  lost +100, so **mean return alone can hide the hack**; truncation and success rate catch it.
+- Thresholds 0.2 / 0.2: 90 to 100% of baseline touchdowns are inside them; 31 to 49% of baseline frames are paid.
+- Fixed: gamma was defined in two places (rewards and train); a test now asserts they match.

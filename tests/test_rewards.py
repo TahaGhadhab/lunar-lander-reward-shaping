@@ -134,3 +134,12 @@ def test_stalling_pays_nothing_under_potential(scripted):
 def test_fixed_adds_fee_to_potential(scripted):
     _, terms = step_once(scripted, "upright_slow_fixed", obs())
     assert set(terms) == {"potential", "time_fee"} and terms["time_fee"] == -0.05
+
+
+def test_potential_gamma_matches_ppo(scripted):
+    """The shaping gamma must equal PPO's, or every frame leaks (1 - gamma) * Phi of bias (audit finding)."""
+    from lander.train import PPO_HYPERPARAMS
+
+    for name in ("upright_slow_potential", "upright_slow_fixed"):
+        env = make_reward_wrapper(scripted(obs(), []), name)
+        assert env.params()["gamma"] == PPO_HYPERPARAMS["gamma"]
