@@ -65,6 +65,7 @@ Install the package in editable mode (`pip install -e .` with a minimal `pyproje
 - `Monitor` wraps the plain env, *inside* the reward wrapper (see `docs/DESIGN.md` 5.1). So `ep_rew_mean` and
   `monitor.csv` show the **plain** return; the shaped return is logged as `shaped_ep_rew_mean`. Even so, the plain
   training return is stochastic: judge by the deterministic plain-env evaluation and the clip.
+- Python 3.12.0 breaks `PPO.load` (zip member reads fail); use 3.12.10 or later.
 - The default `python` on this machine is 3.14. Never use it for the venv (no Box2D wheel); the venv is 3.12.
 
 ## Project skills and agents

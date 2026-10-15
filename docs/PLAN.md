@@ -16,26 +16,26 @@ I `record.py` is tried on the dry-run model.
 
 ## Tonight (about 3 to 4 h): phases 0 to 4
 
-### [ ] Phase 0: Setup (up to 45 min)
+### [x] Phase 0: Setup (up to 45 min)
 - Create `.venv` with `py -3.12 -m venv .venv` (amendment A), install the ranges from `docs/SETUP.md` plus `matplotlib` and `pandas`
   (SB3 2.9 no longer installs them, and `plots.py` imports them).
 - Write `requirements.txt`, a minimal `pyproject.toml` (`src/` layout, ruff config), `scripts/smoke_test.py`, then make the first commit.
 - **Done when:** `scripts/smoke_test.py` prints `SMOKE TEST OK` (imports gymnasium, stable_baselines3, torch and Box2D,
   creates `LunarLander-v3`, steps it once) and the versions are copied into `docs/EXPERIMENTS.md`.
 
-### [ ] Phase 1: Watch it fail (about 20 min)
+### [x] Phase 1: Watch it fail (about 20 min)
 - `src/lander/envs.py` with `make_env`, and `scripts/random_agent.py` (optional game window with `--render`).
 - Print the 8 observation numbers for a few frames and match them to the table in `BRIEF.md`.
 - **Done when:** the mean return of 20 random episodes is logged (expect well below 0).
 
-### [ ] Phase 2: Train the baseline (30 to 45 min of waiting)
+### [x] Phase 2: Train the baseline (30 to 45 min of waiting)
 - `rewards.py` (base `ShapingWrapper`, registry, `baseline`) **with its pass-through and identity tests** (amendment C).
 - `train.py`, `config.json` writing, Monitor logs on the plain env (amendment B).
 - **50k-step dry run** with `SubprocVecEnv` and with `DummyVecEnv`; keep the faster and log steps/s (amendment D).
 - Then 1M steps on seeds 0, 1, 2 (amendment E).
 - **Done when:** the plain return in `monitor.csv` climbs on all seeds, models are saved and the wall-clock time is noted.
 
-### [ ] Phase 3: Evaluate and record (about 30 min)
+### [x] Phase 3: Evaluate and record (about 30 min)
 - `evaluate.py` (plain env, 50 deterministic episodes, seeds 10,000 to 10,049, writes `eval.json` with outcome counts)
   and `record.py` (MP4). Try `record.py` on the dry-run model first (amendment I).
 - **Done when:** mean return across the 3 seeds is at least 200 and `media/baseline_landing.mp4` (median seed) exists.
@@ -72,7 +72,7 @@ I `record.py` is tried on the dry-run model.
 ## Results table (fill as you go; 3 seeds each, mean of per-seed means, worst seed in brackets)
 | Reward | Seeds | Mean return (plain env) | Success % | Mean ep. length | Truncation % | Clip |
 |--------|-------|-------------------------|-----------|-----------------|--------------|------|
-| baseline | | | | | | |
+| baseline | 0,1,2 | 257.3 [252.6] | 98 | 366 | 2 | media/baseline_landing.mp4 |
 | time_penalty | | | | | | |
 | upright_slow_bonus | | | | | | |
 | upright_slow_potential | | | | | | |
