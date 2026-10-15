@@ -66,6 +66,37 @@ Three implementation details matter (all covered by tests in [`tests/test_reward
   next to the shaped one, 3 seeds per variant, writing the hypothesis before each run
   ([`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md)), and recording versions and the git hash in every run's `config.json`.
 
+## See it: two interfaces
+Both need trained models in `runs/` (train them as below; models are not committed).
+
+**1. The lander, live** (`python -m lander.watch`): a game window, with what the network sees and decides next to it.
+```bash
+python -m lander.watch --random                                        # untrained agent: tumbles and crashes
+python -m lander.watch --progression runs/progression/baseline/seed0   # one flight per checkpoint: crash -> landing
+python -m lander.watch --model runs/upright_slow_bonus/seed2           # the hacked agent hovering
+python -m lander.watch --compare                                       # random, baseline, hack, fix in turn
+```
+Keys: SPACE pause, N next, UP/DOWN speed, ESC quit. Progression runs are trained with
+`--checkpoint-every 50000 --run-dir runs/progression/<reward>/seed<N>`.
+
+![Watch window: the hacked agent](media/watch_hover.png)
+
+The panel shows the critic's estimate V(s). It stays around 735 while the hacked agent hovers; the baseline, during its descent, is around 50.
+The network has learned that hovering is worth a fortune.
+
+**2. The machine-learning dashboard** (`python -m lander.dashboard`): a local web page with:
+- results;
+- training curves, and shaped versus plain return;
+- learning progression by checkpoint;
+- a frame-by-frame replay of the actor network next to the video;
+- weights and the test suite.
+
+![Dashboard: network replay](media/dashboard_network.png)
+![Dashboard: learning progression](media/dashboard_progression.png)
+
+The progression panel shows the hack *taking over*. With the bonus, seed 2 first learns to land (up to 30% of
+episodes around 400k to 650k steps), then unlearns it and hovers on every episode.
+
 ## Reproduce one result (about 10 minutes on a laptop CPU)
 Requires Python **3.12.1 or later** in the 3.12 line. 3.12.0 has a `zipfile` bug that breaks loading saved models.
 ```bash
@@ -81,8 +112,9 @@ Across machines expect the same ballpark; bit-identical numbers are not guarante
 ## Project layout
 ```
 src/lander/  envs.py (env + Monitor + reward wrapper), rewards.py (reward variants), train.py,
-             evaluate.py (plain env, deterministic, 50 fixed seeds), record.py, plots.py
-tests/       wrapper pass-through, shaping math, potential telescoping, evaluation metrics (35 tests)
+             evaluate.py (plain env, deterministic, 50 fixed seeds), record.py, plots.py,
+             watch.py (live viewer), dashboard.py + dashboard_template.html, introspect.py (network internals)
+tests/       wrapper pass-through, shaping math, potential telescoping, evaluation metrics, introspection (38 tests)
 docs/        DESIGN.md (design + critical review), PLAN.md, EXPERIMENTS.md (dated log of every run)
 ```
 Stack: Python 3.12, Gymnasium 1.3 (Box2D), Stable-Baselines3 2.9 (PPO, `MlpPolicy` 2×64), PyTorch 2.14 on CPU.

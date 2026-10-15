@@ -197,3 +197,13 @@ Write the hypothesis **before** looking at the results.
 - Fresh `git clone` into a temporary folder, new venv, `pip install -r requirements.txt && pip install -e .`, then
   exactly the README commands: 35 tests pass; `upright_slow_bonus` seed 1, 1M steps (4.7 min alone) evaluates to
   **-49.3 +/- 32.2, truncation 100%, success 0%**: identical to the original run on the same machine.
+
+### 2026-10-15 | progression runs (checkpoints every 50k steps) and visual tools
+- Retrained baseline seed 0, upright_slow_bonus seed 2 and upright_slow_potential seed 0 with
+  `--checkpoint-every 50000` into `runs/progression/` (5.9 min each, 3 in parallel) for `lander.watch` and the
+  dashboard. Each checkpoint evaluated on 10 deterministic plain-env episodes.
+- **Finding: the hack takes over after landing was learned.** upright_slow_bonus seed 2 lands on 10 to 30% of
+  episodes between about 400k and 650k steps, then the landings disappear and every episode times out from about
+  750k steps on. Baseline: crashes / out of bounds until about 300k, then lands on 90 to 100% from 400k.
+- **Critic:** the hacked agent's value estimate stays near 735 for the whole hovering episode (theory in DESIGN 9.1:
+  about 0.8 / (1 - 0.999) = 800); its value-head weight norm grows to about 90 versus about 24 for the baseline.

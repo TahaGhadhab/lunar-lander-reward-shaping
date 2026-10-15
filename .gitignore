@@ -16,3 +16,6 @@ media/*.gif
 
 .env
 .claude/settings.local.json
+
+# generated dashboard (rebuild with python -m lander.dashboard)
+dashboard/

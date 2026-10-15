@@ -11,6 +11,9 @@ requires-python = ">=3.10,<3.13"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+lander = ["dashboard_template.html"]
+
 [tool.ruff]
 line-length = 110
 target-version = "py312"
