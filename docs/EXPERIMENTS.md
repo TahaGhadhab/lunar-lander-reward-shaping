@@ -143,3 +143,15 @@ Write the hypothesis **before** looking at the results.
   ground firing side engines (35% leg contact, 68% side engine). Lesson for the write-up: the exploit an agent finds
   depends on the learning path, not only on what is optimal.
 - **Next:** Phase 6, the potential-based fix and its ablation.
+
+### 2026-10-15 | upright_slow_potential (ablation) and upright_slow_fixed | seeds 0, 1, 2 each
+- **Hypothesis:** both remove the exploit: truncation below 5% on every seed, plain mean within one baseline std
+  (about 257 +/- 25). Reason: with `F = gamma*Phi(s') - Phi(s)` a stall in the best state pays
+  `(gamma - 1) * Phi = -0.01` per frame, and the shaping total over any episode is bounded by `Phi(s_0)` (at most
+  10), so no policy can farm it. Potential-based shaping keeps the optimal policy (Ng et al. 1999), so I expect
+  **baseline-level** results, not better ones. `upright_slow_fixed` adds the 0.05 fee and should look like
+  `time_penalty` (shorter episodes, ~300 frames). If only `fixed` works, the fee did the fixing, not the potential.
+- **Reward change:** `Phi(s) = 10 * upright_slow_score(s)` (score in [0, 1], linear in tilt and speed, same 0.2 / 0.2
+  scales), `gamma = 0.999` (= PPO), `Phi = 0` on termination only. `fixed` = same + `-0.05` per frame.
+- **Command:** `python -m lander.train --reward <name> --seed <s> --steps 1000000 --vec dummy --torch-threads 1`
+- **Hyperparams changed vs default:** none
